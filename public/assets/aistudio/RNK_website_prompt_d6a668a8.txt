@@ -1,0 +1,678 @@
+# MASTER DEVELOPMENT PROMPT — RNK PHOTO FRAMES
+
+## 1. Project Overview
+
+Build a complete, production-ready, premium photo frame business portfolio website for **RNK Photo Frames**, located in PodaturPet, Tiruttani, Tamil Nadu, India.
+
+This must be a real, functional, database-connected application, not a static UI prototype.
+
+The website must have two distinct areas:
+
+1. **Public Customer Website:** Visitors can browse products, view images, sizes, prices, business details, and contact the business.
+2. **Secure Admin Dashboard:** The authorized admin can manage products, return gift combos, categories, prices, images, banners, and customer enquiries.
+
+Customers must have read-only access. Only the authenticated admin can create, update, disable, or delete catalogue content.
+
+## 2. Business Information
+
+- Business name: RNK Photo Frames
+- Location: PodaturPet, Tiruttani, Tamil Nadu, India
+- Phone: +91 8681917433
+- WhatsApp: +91 8681917433
+- Currency: INR (₹)
+- Languages: Tamil and English
+- Business category: Photo Frames, Personalized Gifts, Return Gift Combos
+- Website purpose: Premium portfolio and product catalogue
+- Sales model: Customer enquiries by phone and WhatsApp
+- Checkout: Not required
+- Online payments: Not required
+- Customer registration: Not required
+- Admin accounts: One authorized admin account
+
+Keep business details configurable so they can be changed later without editing multiple source files.
+
+## 3. Technology Stack
+
+Use the following modern stack unless a genuine technical limitation requires an alternative.
+
+### Frontend
+- Next.js with App Router
+- TypeScript with strict type checking
+- Tailwind CSS
+- shadcn/ui components
+- Lucide icons
+- React Hook Form and Zod for form validation
+- next/image for optimized product images
+
+Use stable, mutually compatible package versions and commit the lockfile. Do not use experimental features unnecessarily.
+
+### Backend and Database
+- Supabase PostgreSQL
+- Supabase Auth for administrator authentication
+- Supabase Storage for product and banner images
+- Supabase Row Level Security (RLS) for authorization
+- Server-side data access through secure server components and server-side functions where appropriate
+
+Do not introduce a separate FastAPI backend unless it provides a clear requirement-driven benefit. The chosen architecture should remain simple, secure, maintainable, and economical to host.
+
+## 4. Premium UI/UX Design
+
+Create an elegant editorial-style visual identity specifically for RNK Photo Frames.
+
+### Visual direction
+- Warm ivory and off-white backgrounds
+- Charcoal or near-black typography
+- Restrained muted gold or warm brown accents
+- Large, high-quality product photography
+- Elegant serif headings paired with a clean sans-serif body font
+- Generous whitespace and sophisticated grid layouts
+- Subtle animations and transitions
+- Minimal borders and carefully designed shadows
+- Premium, uncluttered layouts
+- Consistent spacing, typography, and button styles
+
+Choose fonts that support both Tamil and English. Use a suitable Tamil font such as Noto Sans Tamil alongside an appropriate Latin font. Ensure the Tamil font renders correctly on mobile and desktop.
+
+Do not make the site look like a generic dashboard template, a discount-heavy ecommerce store, or an AI-generated landing page.
+
+Do not use excessive gradients, oversized rounded cards, unnecessary glass effects, or distracting animations.
+
+Use real business/product photographs uploaded by the admin. Until real images are available, use tasteful placeholders clearly marked as sample content. Never represent sample products or prices as actual business offerings.
+
+### Responsive design
+The entire application must work well on:
+- Mobile phones
+- Tablets
+- Laptops
+- Large desktop screens
+
+Provide accessible contrast, visible focus states, keyboard navigation, descriptive image alt text, and reduced-motion support.
+
+## 5. Public Website Pages
+
+### A. Home Page
+
+Create an editorial-style home page with:
+
+1. Premium navigation header
+2. RNK Photo Frames wordmark or logo
+3. Tamil/English language selector
+4. Large hero banner with admin-managed image, heading, description, and CTA
+5. Featured photo frames
+6. Popular return gift combos
+7. Customized frames section
+8. Birthday and wedding collections
+9. Other gift items section
+10. Short business introduction
+11. Customer enquiry/contact section
+12. Location and contact details
+13. Elegant footer
+
+Suggested editable hero copy:
+
+English:
+“Frames That Preserve Your Beautiful Moments”
+
+Tamil:
+“உங்கள் அழகான நினைவுகளை என்றும் பாதுகாக்கும் ஃப்ரேம்கள்”
+
+Use these only as editable initial copy. The admin should be able to change the banner image, heading, subtitle, and CTA label.
+
+The home page must display only published and active products.
+
+### B. Catalogue Pages
+
+Create dedicated catalogue views for:
+
+- All Photo Frames
+- Return Gift Combos
+- Customized Frames
+- Birthday Frames
+- Wedding Frames
+- Other Gift Items
+
+Each catalogue must support:
+- Responsive product grid
+- Product image and optional image count indicator
+- Product name
+- Short description
+- Original price, when provided
+- Offer price, when provided
+- Available sizes and their prices
+- Category
+- Product details link
+- WhatsApp enquiry action
+
+Provide search and category filters if useful. Do not add cart, checkout, or payment functionality.
+
+### C. Product Details Page
+
+Every product must have a dedicated page containing:
+- Product name
+- Main image
+- Additional product images
+- Image gallery with thumbnails
+- Full description
+- Category
+- Available sizes
+- Price for each size, where applicable
+- Original price and offer price
+- Discount percentage, when both prices are valid
+- Relevant product suggestions
+- WhatsApp enquiry button
+- Phone contact button
+
+For products with size-specific prices, clearly identify the selected size and its price. Never display an ambiguous starting price when the actual price varies by size.
+
+If a product is unavailable, do not allow customers to enquire as though it is currently available. Show a clear unavailable state.
+
+### D. About Page
+
+Include:
+- Business name
+- Business introduction
+- Product categories
+- Location
+- Contact information
+
+All business introduction text must be editable through the admin settings.
+
+### E. Contact Page
+
+Display:
+- RNK Photo Frames
+- Phone: +91 8681917433
+- WhatsApp: +91 8681917433
+- PodaturPet, Tiruttani, Tamil Nadu
+- Click-to-call link
+- Click-to-WhatsApp link
+- Google Maps directions link based on the configured business location
+
+Use:
+- `tel:+918681917433`
+- `https://wa.me/918681917433`
+
+Do not create a customer-facing contact form unless it is connected to the enquiry database and has proper validation, abuse protection, and admin visibility.
+
+## 6. Product Data Model
+
+Design a normalized PostgreSQL schema.
+
+### Categories
+Fields:
+- id
+- name_en
+- name_ta
+- slug
+- description
+- display_order
+- is_active
+- created_at
+- updated_at
+
+Seed the six requested categories:
+- Photo Frames
+- Return Gift Combos
+- Customized Frames
+- Birthday Frames
+- Wedding Frames
+- Other Gift Items
+
+Allow the admin to assign a product to an appropriate category.
+
+### Products
+Fields:
+- id
+- name_en
+- name_ta
+- slug
+- short_description_en
+- short_description_ta
+- description_en
+- description_ta
+- category_id
+- original_price, nullable
+- offer_price, nullable
+- primary_image_path, nullable
+- is_active
+- is_featured
+- display_order
+- created_at
+- updated_at
+
+Use appropriate constraints and indexes. Store monetary values as PostgreSQL NUMERIC values with two decimal places, not floating-point numbers.
+
+### Product Images
+Fields:
+- id
+- product_id
+- storage_path
+- alt_text_en
+- alt_text_ta
+- display_order
+- created_at
+
+Support multiple images per product and designate a primary image. Deleting a product must handle its related records safely.
+
+### Product Sizes and Prices
+Create a separate table for products with multiple sizes.
+
+Fields:
+- id
+- product_id
+- size_label_en
+- size_label_ta
+- width
+- height
+- measurement_unit
+- original_price
+- offer_price
+- is_available
+- display_order
+- created_at
+- updated_at
+
+Examples of sizes such as 4x6, 5x7, 8x10, and 12x18 inches may be offered as examples only. Do not assume these sizes are actually sold by RNK. The admin must be able to add any size and price.
+
+Allow different prices for different sizes.
+
+Validate that prices are non-negative and that an offer price, when present, is lower than its corresponding original price.
+
+Avoid storing redundant size prices at both product and size level in a way that creates conflicting values. Define a clear pricing rule: size-specific prices take precedence when size variants exist; otherwise, use the product-level price.
+
+### Return Gift Combos
+Create a dedicated combo model or use a consistent shared product model with an explicit product type. Choose the implementation that provides clean validation and maintainability.
+
+Combo fields must include:
+- Combo name in English and Tamil
+- Slug
+- Description in English and Tamil
+- Included items and quantities
+- Original price
+- Offer price
+- Multiple images
+- Availability
+- Featured status
+- Display order
+- Created and updated timestamps
+
+Support adding, editing, disabling, and deleting combos.
+
+Allow an admin to describe the included gifts and quantities. If individual item prices are not provided, do not invent them.
+
+### Enquiries
+Fields:
+- id
+- customer_name
+- phone_number
+- product_id, nullable
+- combo_id, nullable
+- enquiry_type
+- message
+- status
+- created_at
+- updated_at
+
+Possible statuses:
+- NEW
+- CONTACTED
+- RESOLVED
+- SPAM
+
+An enquiry must be associated with the selected product or combo when applicable.
+
+### Business Settings
+Store configurable settings for:
+- Business name
+- Phone
+- WhatsApp number
+- Location
+- English introduction
+- Tamil introduction
+- Logo
+- Contact details
+- Social links
+- Default language
+- SEO title and description
+
+Only the admin can update these settings.
+
+### Banner Management
+Support:
+- Banner image
+- English heading and subtitle
+- Tamil heading and subtitle
+- CTA label and optional destination
+- Active/inactive state
+- Display order
+
+Validate CTA destinations and prevent unsafe URL schemes. If multiple banners are active, define an explicit display order or active banner selection.
+
+## 7. Secure Admin Authentication
+
+Create a separate admin login page at `/admin/login`.
+
+Admin features:
+- Email and password login
+- Secure session handling
+- Logout
+- Protected admin routes
+- Clear invalid-login messages
+- Loading and error states
+- Session expiry handling
+- Password reset workflow if configured
+- No public admin registration
+
+Create the initial admin account through a documented secure setup procedure. Do not hardcode a real admin email or password into the source code.
+
+A user who merely creates a Supabase account must not automatically gain admin privileges.
+
+Implement a secure single-admin authorization strategy using trusted server-side authorization and database policies. Do not trust a role or admin flag supplied by the browser.
+
+Never expose Supabase service-role credentials, database passwords, or other secrets in client-side code.
+
+## 8. Admin Dashboard
+
+Create a polished, desktop-friendly dashboard with responsive mobile navigation.
+
+Dashboard cards:
+- Total products
+- Active products
+- Inactive products
+- Total categories
+- Total return gift combos
+- New enquiries
+- Unresolved enquiries
+
+Provide shortcuts for adding a product, creating a combo, updating banners, and reviewing enquiries.
+
+All counts must come from the database. Do not hardcode dashboard numbers.
+
+### Product Management
+Admin must be able to:
+- Create products
+- Edit product details
+- Delete products with confirmation
+- Enable or disable products
+- Mark products as featured
+- Assign categories
+- Upload multiple images
+- Reorder images
+- Add and remove sizes
+- Set size-specific prices
+- Set original and offer prices
+- Preview the customer-facing product page
+
+### Combo Management
+Admin must be able to:
+- Add combos
+- Edit combo information
+- Upload multiple images
+- Manage included items and quantities
+- Set original and offer prices
+- Feature or unfeature combos
+- Enable or disable combos
+- Delete combos after confirmation
+
+### Banner Management
+Admin must be able to:
+- Upload banner images
+- Update English and Tamil text
+- Preview desktop and mobile layouts
+- Change CTA labels and destinations
+- Reorder banners
+- Enable or disable banners
+
+### Enquiry Management
+Admin must be able to:
+- View enquiries
+- Search by customer name or phone
+- Filter by date, product, category, and status
+- Open enquiry details
+- Update enquiry status
+- Open the customer's phone dialler
+- Open a WhatsApp conversation when appropriate
+
+Do not claim that an enquiry has been submitted unless it was successfully stored in the database.
+
+## 9. Image Upload and Storage
+
+Use Supabase Storage for persistent image storage.
+
+Requirements:
+- Upload from desktop and mobile
+- Support multiple images per product
+- Support banner uploads
+- Validate file types
+- Enforce configurable file size limits
+- Generate unique, safe object paths
+- Display upload progress
+- Show previews before saving
+- Handle upload failures and retry safely
+- Prevent unauthorized overwrites and deletions
+- Use optimized image sizes and modern formats where supported
+- Keep image metadata and storage paths consistent
+
+Use a public read-only image bucket only when appropriate for published product and banner images. Enforce authenticated admin permissions for uploads and mutations. Keep private files in private buckets if introduced later.
+
+Avoid leaving orphaned storage files when database changes fail or a product is deleted. Use a reliable cleanup strategy with appropriate failure handling.
+
+## 10. Customer Catalogue Security
+
+Customer access must be read-only.
+
+Visitors can:
+- View active categories
+- View published products and combos
+- View product images
+- View available sizes and prices
+- View business information
+- Use phone and WhatsApp links
+
+Visitors cannot:
+- Create or modify products
+- Change prices
+- Upload or delete images
+- Edit banners
+- Modify business settings
+- Read private admin data
+- Access protected admin operations
+
+Implement authorization in the database and trusted server-side layers, not merely by hiding admin buttons.
+
+Configure PostgreSQL privileges and RLS policies for every exposed table. Ensure public users can read only the necessary published, active catalogue data. Restrict enquiries and business-setting mutations to the authorized admin or a validated server-side submission path.
+
+Never ship a service-role key to the browser.
+
+## 11. Tamil and English Localization
+
+Implement a complete language switcher.
+
+Requirements:
+- English and Tamil versions of all public-facing labels
+- Localized navigation
+- Localized category names
+- Localized product names and descriptions when provided
+- Localized banner headings
+- Localized validation messages and empty states
+- Language preference persistence
+- Correct Tamil font rendering
+- Appropriate language metadata
+
+Do not translate product names automatically in a way that changes their intended meaning. If a Tamil translation is not provided, define a consistent fallback to English.
+
+Keep admin management forms usable in both languages.
+
+## 12. WhatsApp and Phone Integration
+
+Use the configured business phone and WhatsApp numbers.
+
+Product enquiry links should open WhatsApp with a prefilled message containing:
+- Customer's enquiry about the product
+- Product name
+- Selected size, if applicable
+- Displayed price, if applicable
+- Product page URL, where available
+
+Combo enquiry links should include the combo name and displayed price.
+
+Use properly URL-encoded messages and validate all URLs.
+
+Do not implement online ordering or payment processing. WhatsApp is an enquiry channel, not a claim that an order has been confirmed.
+
+## 13. Performance and SEO
+
+Implement:
+- Server rendering where beneficial
+- Metadata for each public page
+- Canonical URLs
+- Open Graph metadata
+- XML sitemap
+- robots.txt
+- Meaningful page titles and descriptions
+- Semantic HTML
+- Optimized images
+- Lazy loading below the fold
+- Pagination or controlled loading for large catalogues
+- Database indexes for frequent queries
+- Accessible loading, empty, and error states
+
+Use LocalBusiness structured data only with verified business information. Do not fabricate opening hours, ratings, customer reviews, or a street address.
+
+The website should remain useful on slow mobile connections.
+
+## 14. Error Handling and Data Integrity
+
+Implement:
+- Client-side and server-side validation
+- Database constraints
+- Clear success and failure notifications
+- Duplicate-submit prevention
+- Confirmation dialogs for destructive actions
+- Safe slug generation
+- Unique constraints for slugs
+- Consistent currency formatting
+- Proper handling of missing images
+- Graceful empty states
+- Reliable database error reporting
+- No exposure of internal exceptions or secrets to customers
+
+Use transactions for related database changes where appropriate.
+
+Use soft disable as the preferred way to hide products without losing their information. If permanent deletion is offered, confirm the action and handle related records and storage files safely.
+
+## 15. Suggested Routes
+
+Public:
+- `/`
+- `/about`
+- `/catalogue`
+- `/catalogue/[categorySlug]`
+- `/product/[slug]`
+- `/combos`
+- `/combos/[slug]`
+- `/contact`
+
+Admin:
+- `/admin/login`
+- `/admin`
+- `/admin/products`
+- `/admin/products/new`
+- `/admin/products/[id]/edit`
+- `/admin/combos`
+- `/admin/combos/new`
+- `/admin/combos/[id]/edit`
+- `/admin/categories`
+- `/admin/banners`
+- `/admin/enquiries`
+- `/admin/settings`
+
+Implement a clear route structure and consistent navigation.
+
+## 16. Testing Requirements
+
+Write and run tests for:
+
+- Public catalogue displays only active products
+- Product detail pages show correct sizes and prices
+- Offer prices are validated correctly
+- Product create, update, disable, and delete
+- Combo create, update, disable, and delete
+- Multiple image uploads and cleanup
+- Admin login and logout
+- Unauthorized users cannot access admin routes
+- Customers cannot mutate database records
+- Enquiries are stored and visible to the admin
+- Tamil and English switching
+- WhatsApp message generation
+- Mobile navigation
+- Missing-image and database-error states
+
+Verify database security policies independently of the UI.
+
+Include appropriate unit tests, integration tests, and a basic end-to-end test for the core admin workflow.
+
+## 17. Deployment and Documentation
+
+Prepare the project for deployment to a suitable Next.js hosting provider with Supabase as the managed backend.
+
+Provide:
+- Complete source code
+- A clear project directory structure
+- `.env.example` containing placeholders only
+- Database migrations
+- RLS policies and grants
+- Storage bucket and storage policy setup
+- Secure initial admin account setup instructions
+- Local development instructions
+- Production deployment instructions
+- Testing commands
+- Seed script for categories only
+- Troubleshooting guide
+- README documenting the architecture
+
+Do not commit real credentials. Do not assume environment variables are configured without checking them.
+
+Document the database backup and recovery approach, along with the limits of the chosen hosting and database plans.
+
+## 18. Development Workflow
+
+Follow these steps in order:
+
+1. Inspect the current repository before modifying anything.
+2. Identify whether a project already exists and preserve useful existing code.
+3. Establish the application architecture and database schema.
+4. Create migrations, constraints, indexes, and security policies.
+5. Implement authentication and authorization.
+6. Build the public catalogue and product pages.
+7. Build the admin dashboard and CRUD operations.
+8. Implement persistent image uploads.
+9. Add Tamil/English localization.
+10. Integrate WhatsApp and phone contact links.
+11. Implement responsive styling and accessibility.
+12. Add tests and execute them.
+13. Fix identified failures rather than hiding them.
+14. Document setup and deployment.
+15. Verify the complete workflow from a fresh installation.
+
+Do not stop after creating the home page or a visual mockup.
+
+Do not leave core features as TODOs, fake API responses, hardcoded product arrays, or nonfunctional buttons.
+
+If external credentials are unavailable, implement the integration and clearly document the exact setup required. Never pretend that a live database, authentication, upload, or deployment has been tested when it has not.
+
+## Final Acceptance Criteria
+
+The project is complete only when:
+
+- RNK Photo Frames has a polished, premium, responsive portfolio website.
+- Customers can browse the real database-backed catalogue without logging in.
+- The admin can securely log in and manage products, combos, sizes, prices, images, banners, and enquiries.
+- All catalogue changes persist in the database and appear on the public website.
+- Customers cannot change any catalogue data.
+- Phone and WhatsApp links work with the configured business number.
+- Tamil and English interfaces are usable.
+- Database security, validation, and core tests pass.
+- Setup, deployment, and admin instructions are documented.
+
+Build the complete application with production-quality code, consistent UI design, reliable data handling, and no unnecessary ecommerce complexity.

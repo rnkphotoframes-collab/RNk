@@ -1,0 +1,6 @@
+{
+  "name": "RNK Photo Frames",
+  "description": "Premium photo frame business portfolio and product catalogue for RNK Photo Frames, PodaturPet, Tiruttani. Featuring bespoke frames, return gift combos, and size-customized pricing in Tamil and English.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

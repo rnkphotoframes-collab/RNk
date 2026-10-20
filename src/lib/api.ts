@@ -1,0 +1,392 @@
+import {
+  Category,
+  Product,
+  ReturnGiftCombo,
+  CustomerEnquiry,
+  Banner,
+  BusinessSettings,
+  DashboardStats,
+  EnquiryStatus,
+} from '../types/index.js';
+
+const ADMIN_TOKEN_KEY = 'rnk_admin_token';
+
+export const authStorage = {
+  getToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(ADMIN_TOKEN_KEY);
+  },
+  setToken(token: string) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  },
+  clearToken() {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+  },
+};
+
+function getAuthHeaders(): HeadersInit {
+  const token = authStorage.getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// Public API
+export async function fetchCategories(): Promise<Category[]> {
+  const res = await fetch('/api/categories');
+  if (!res.ok) throw new Error('Failed to load categories');
+  return res.json();
+}
+
+export async function fetchProducts(options?: {
+  category?: string;
+  search?: string;
+  featured?: boolean;
+}): Promise<Product[]> {
+  const params = new URLSearchParams();
+  if (options?.category) params.append('category', options.category);
+  if (options?.search) params.append('search', options.search);
+  if (options?.featured) params.append('featured', 'true');
+
+  const res = await fetch(`/api/products?${params.toString()}`);
+  if (!res.ok) throw new Error('Failed to load products');
+  return res.json();
+}
+
+export async function fetchProductBySlug(slugOrId: string): Promise<Product> {
+  const res = await fetch(`/api/products/${slugOrId}`);
+  if (!res.ok) throw new Error('Product not found');
+  return res.json();
+}
+
+export async function fetchCombos(options?: { featured?: boolean }): Promise<ReturnGiftCombo[]> {
+  const params = new URLSearchParams();
+  if (options?.featured) params.append('featured', 'true');
+  const res = await fetch(`/api/combos?${params.toString()}`);
+  if (!res.ok) throw new Error('Failed to load combos');
+  return res.json();
+}
+
+export async function fetchComboBySlug(slugOrId: string): Promise<ReturnGiftCombo> {
+  const res = await fetch(`/api/combos/${slugOrId}`);
+  if (!res.ok) throw new Error('Combo not found');
+  return res.json();
+}
+
+export async function fetchBanners(): Promise<Banner[]> {
+  const res = await fetch('/api/banners');
+  if (!res.ok) throw new Error('Failed to load banners');
+  return res.json();
+}
+
+export async function fetchSettings(): Promise<BusinessSettings> {
+  const res = await fetch('/api/settings');
+  if (!res.ok) throw new Error('Failed to load settings');
+  return res.json();
+}
+
+export async function submitCustomerEnquiry(data: {
+  customer_name: string;
+  phone_number: string;
+  product_id?: string | null;
+  combo_id?: string | null;
+  selected_size?: string | null;
+  enquiry_type?: CustomerEnquiry['enquiry_type'];
+  message: string;
+}): Promise<{ success: boolean; message: string; enquiry: CustomerEnquiry }> {
+  const res = await fetch('/api/enquiries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to submit enquiry');
+  }
+  return res.json();
+}
+
+// Admin API
+export async function adminLogin(email: string, pass: string): Promise<{ success: boolean; token: string }> {
+  const res = await fetch('/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: pass }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Invalid credentials');
+  }
+  const data = await res.json();
+  authStorage.setToken(data.token);
+  return data;
+}
+
+export async function checkAdminSession(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/admin/me', {
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function adminLogout(): Promise<void> {
+  try {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+  } finally {
+    authStorage.clearToken();
+  }
+}
+
+export async function fetchAdminStats(): Promise<DashboardStats> {
+  const res = await fetch('/api/admin/stats', {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch dashboard stats');
+  return res.json();
+}
+
+export async function fetchAdminProducts(): Promise<Product[]> {
+  const res = await fetch('/api/admin/products', {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch products');
+  return res.json();
+}
+
+export async function createAdminProduct(productData: Partial<Product>): Promise<Product> {
+  const res = await fetch('/api/admin/products', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(productData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create product');
+  }
+  return res.json();
+}
+
+export async function updateAdminProduct(id: string, productData: Partial<Product>): Promise<Product> {
+  const res = await fetch(`/api/admin/products/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(productData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update product');
+  }
+  return res.json();
+}
+
+export async function deleteAdminProduct(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/products/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete product');
+  }
+}
+
+export async function fetchAdminCombos(): Promise<ReturnGiftCombo[]> {
+  const res = await fetch('/api/admin/combos', {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch combos');
+  return res.json();
+}
+
+export async function createAdminCombo(comboData: Partial<ReturnGiftCombo>): Promise<ReturnGiftCombo> {
+  const res = await fetch('/api/admin/combos', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(comboData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create combo');
+  }
+  return res.json();
+}
+
+export async function updateAdminCombo(id: string, comboData: Partial<ReturnGiftCombo>): Promise<ReturnGiftCombo> {
+  const res = await fetch(`/api/admin/combos/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(comboData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update combo');
+  }
+  return res.json();
+}
+
+export async function deleteAdminCombo(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/combos/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete combo');
+  }
+}
+
+export async function fetchAdminBanners(): Promise<Banner[]> {
+  const res = await fetch('/api/admin/banners', {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch banners');
+  return res.json();
+}
+
+export async function createAdminBanner(bannerData: Partial<Banner>): Promise<Banner> {
+  const res = await fetch('/api/admin/banners', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(bannerData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to create banner');
+  }
+  return res.json();
+}
+
+export async function updateAdminBanner(id: string, bannerData: Partial<Banner>): Promise<Banner> {
+  const res = await fetch(`/api/admin/banners/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(bannerData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update banner');
+  }
+  return res.json();
+}
+
+export async function deleteAdminBanner(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/banners/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete banner');
+  }
+}
+
+export async function fetchAdminEnquiries(options?: { status?: EnquiryStatus; search?: string }): Promise<CustomerEnquiry[]> {
+  const params = new URLSearchParams();
+  if (options?.status) params.append('status', options.status);
+  if (options?.search) params.append('search', options.search);
+
+  const res = await fetch(`/api/admin/enquiries?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch enquiries');
+  return res.json();
+}
+
+export async function updateAdminEnquiry(id: string, status: EnquiryStatus, admin_notes?: string): Promise<CustomerEnquiry> {
+  const res = await fetch(`/api/admin/enquiries/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ status, admin_notes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update enquiry');
+  }
+  return res.json();
+}
+
+export async function deleteAdminEnquiry(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/enquiries/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to delete enquiry');
+  }
+}
+
+export async function updateAdminSettings(settings: Partial<BusinessSettings>): Promise<BusinessSettings> {
+  const res = await fetch('/api/admin/settings', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(settings),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update settings');
+  }
+  return res.json();
+}
+
+export async function uploadImageFile(file: File): Promise<{ url: string; filename: string }> {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to upload image');
+  }
+  return res.json();
+}
+
+export async function fetchSupabaseStatus(): Promise<{
+  isConfigured: boolean;
+  url: string | null;
+  hasServiceKey: boolean;
+  hasAnonKey: boolean;
+  mode: string;
+}> {
+  const res = await fetch('/api/admin/supabase-status', {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to fetch status');
+  return res.json();
+}

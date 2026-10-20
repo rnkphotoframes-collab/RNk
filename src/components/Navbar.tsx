@@ -125,18 +125,16 @@ export default function Navbar({ currentRoute, onNavigate, isAdminLoggedIn }: Na
             <span>{t.hero_cta_secondary}</span>
           </a>
 
-          {/* Admin link */}
-          <button
-            onClick={() => handleNavClick('/admin')}
-            title="Admin Portal"
-            className={`p-2 rounded-md border transition-all cursor-pointer ${
-              currentRoute.startsWith('/admin') || isAdminLoggedIn
-                ? 'bg-[#C5A880] text-white border-[#C5A880]'
-                : 'border-[#D8D0C0] text-[#57534E] hover:text-[#1C1917] hover:bg-white'
-            }`}
-          >
-            <Shield className="w-4 h-4" />
-          </button>
+          {/* Admin link (Only shown if already authenticated) */}
+          {isAdminLoggedIn && (
+            <button
+              onClick={() => handleNavClick('/admin')}
+              title="Admin Portal"
+              className="p-2 rounded-md border bg-[#C5A880] text-white border-[#C5A880] transition-all cursor-pointer"
+            >
+              <Shield className="w-4 h-4" />
+            </button>
+          )}
 
           {/* Mobile hamburger button */}
           <button
@@ -184,6 +182,13 @@ export default function Navbar({ currentRoute, onNavigate, isAdminLoggedIn }: Na
                 <MessageCircle className="w-4 h-4 text-emerald-400" />
                 <span>{t.hero_cta_secondary}</span>
               </a>
+
+              <button
+                onClick={() => handleNavClick('/admin/login')}
+                className="text-xs text-stone-400 hover:text-stone-700 py-1 cursor-pointer transition-colors"
+              >
+                Admin Login
+              </button>
             </div>
           </div>
         </div>

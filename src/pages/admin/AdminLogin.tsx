@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Lock, Mail, AlertCircle, Key, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
 import { adminLogin } from '../../lib/api.js';
 
 interface AdminLoginProps {
@@ -8,11 +8,10 @@ interface AdminLoginProps {
 }
 
 export default function AdminLogin({ onLoginSuccess, onNavigateHome }: AdminLoginProps) {
-  const [email, setEmail] = useState('rnkphotoframes@gmail.com');
-  const [password, setPassword] = useState('RNK@Frames2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showHelper, setShowHelper] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,28 +43,6 @@ export default function AdminLogin({ onLoginSuccess, onNavigateHome }: AdminLogi
             Secure portal for RNK Photo Frames catalogue & enquiry management.
           </p>
         </div>
-
-        {/* Credentials helper card */}
-        {showHelper && (
-          <div className="bg-[#FAF8F5] p-3.5 rounded-lg border border-[#C5A880]/50 text-xs text-stone-700 space-y-1 relative">
-            <button
-              onClick={() => setShowHelper(false)}
-              className="absolute top-2 right-2 text-stone-400 hover:text-stone-600 text-xs font-bold"
-            >
-              ×
-            </button>
-            <div className="flex items-center gap-1.5 font-bold text-[#997A4D]">
-              <Key className="w-3.5 h-3.5" />
-              <span>Admin Access Information:</span>
-            </div>
-            <p className="text-[11px] text-stone-600">
-              Authorized Email: <strong className="text-stone-900 font-mono">rnkphotoframes@gmail.com</strong>
-            </p>
-            <p className="text-[11px] text-stone-600">
-              Default Setup Password: <strong className="text-stone-900 font-mono">RNK@Frames2026</strong>
-            </p>
-          </div>
-        )}
 
         {/* Form Card */}
         <div className="bg-white p-6 sm:p-8 rounded-xl border border-[#E8E2D5] shadow-lg space-y-5">

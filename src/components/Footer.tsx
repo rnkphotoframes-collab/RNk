@@ -1,4 +1,4 @@
-import { Phone, MessageCircle, MapPin, Clock, ShieldCheck, Heart } from 'lucide-react';
+import { Phone, MessageCircle, MapPin, Clock, ShieldCheck, Heart, Lock } from 'lucide-react';
 import { useLanguage } from '../lib/i18n.js';
 import { BUSINESS_PHONE_DISPLAY, getCallDirectUrl, getGeneralWhatsAppUrl } from '../lib/whatsapp.js';
 
@@ -76,14 +76,6 @@ export default function Footer({ onNavigate }: FooterProps) {
                   className="hover:text-[#C5A880] transition-colors text-left cursor-pointer"
                 >
                   {t.nav_contact}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('/admin')}
-                  className="hover:text-[#C5A880] transition-colors text-left cursor-pointer text-stone-500"
-                >
-                  {t.nav_admin}
                 </button>
               </li>
             </ul>
@@ -185,7 +177,18 @@ export default function Footer({ onNavigate }: FooterProps) {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <p>© {new Date().getFullYear()} RNK Photo Frames. {t.footer_rights}</p>
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+            <p>© {new Date().getFullYear()} RNK Photo Frames. {t.footer_rights}</p>
+            <span className="text-stone-700 hidden sm:inline">•</span>
+            <button
+              onClick={() => onNavigate('/admin/login')}
+              className="text-stone-400 hover:text-[#C5A880] transition-colors flex items-center gap-1 cursor-pointer font-medium"
+              title="Admin Portal Login"
+            >
+              <Lock className="w-3 h-3" />
+              <span>Admin Login</span>
+            </button>
+          </div>
           <div className="flex items-center gap-1.5 text-stone-400">
             <Heart className="w-3.5 h-3.5 text-red-400 fill-current" />
             <span>{t.footer_made_with_care}</span>

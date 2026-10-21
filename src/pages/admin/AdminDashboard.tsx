@@ -23,6 +23,8 @@ import {
   Upload,
   AlertTriangle,
   RefreshCw,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 import {
   Category,
@@ -99,6 +101,7 @@ export default function AdminDashboard({
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Partial<Banner> | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [sqlCopied, setSqlCopied] = useState(false);
 
@@ -390,12 +393,31 @@ export default function AdminDashboard({
 
   // Image Upload helper
   const handleFileUpload = async (file: File, onSuccess: (url: string) => void) => {
+    if (!file) return;
+    setIsUploadingImage(true);
     try {
       const res = await uploadImageFile(file);
       onSuccess(res.url);
-      showNotification('Image uploaded successfully');
+      showNotification('Image uploaded successfully! / படம் வெற்றிகரமாக பதிவேற்றப்பட்டது!');
     } catch (err: any) {
       showNotification(err.message || 'Image preview loaded');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleDirectBannerUpload = async (banner: Banner, file: File) => {
+    if (!file) return;
+    setIsUploadingImage(true);
+    try {
+      const res = await uploadImageFile(file);
+      await updateAdminBanner(banner.id, { ...banner, image_path: res.url });
+      showNotification('Banner image updated! / பேனர் படம் மாற்றப்பட்டது!');
+      loadAllData();
+    } catch (err: any) {
+      showNotification(err.message || 'Error updating banner image');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -996,11 +1018,31 @@ export default function AdminDashboard({
               {banners.map((ban, idx) => (
                 <div key={ban.id} className="bg-white p-5 rounded-xl border border-[#E8E2D5] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <img
-                      src={ban.image_path}
-                      alt={ban.heading_en}
-                      className="w-24 h-16 object-cover rounded-md border border-stone-200 shrink-0"
-                    />
+                    <div className="relative group shrink-0">
+                      <img
+                        src={ban.image_path}
+                        alt={ban.heading_en}
+                        className="w-28 h-18 object-cover rounded-md border border-stone-200"
+                      />
+                      <label
+                        title="Upload new image / படத்தை மாற்றவும்"
+                        className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-bold rounded-md cursor-pointer transition-opacity"
+                      >
+                        <Upload className="w-4 h-4 mb-0.5 text-[#C5A880]" />
+                        <span>Change</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploadingImage}
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) handleDirectBannerUpload(ban, file);
+                          }}
+                        />
+                      </label>
+                    </div>
+
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-[#997A4D]">Banner #{idx + 1}</span>
@@ -1014,6 +1056,20 @@ export default function AdminDashboard({
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
+                    <label className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-[#D8D0C0] text-xs font-semibold hover:bg-stone-50 cursor-pointer text-stone-700">
+                      <Upload className="w-3.5 h-3.5 text-[#C5A880]" />
+                      <span>Upload Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isUploadingImage}
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleDirectBannerUpload(ban, file);
+                        }}
+                      />
+                    </label>
                     <button
                       onClick={() => {
                         setEditingBanner({ ...ban });
@@ -1679,13 +1735,40 @@ export default function AdminDashboard({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-stone-800 block mb-1">Primary Image URL</label>
-                <input
-                  type="text"
-                  value={editingCombo.primary_image_path || ''}
-                  onChange={e => setEditingCombo({ ...editingCombo, primary_image_path: e.target.value })}
-                  className="w-full px-3 py-2 rounded-md bg-white border border-[#D8D0C0] text-xs"
-                />
+                <label className="text-xs font-semibold text-stone-800 block mb-1">Primary Image URL or Upload</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editingCombo.primary_image_path || ''}
+                    onChange={e => setEditingCombo({ ...editingCombo, primary_image_path: e.target.value })}
+                    className="flex-1 px-3 py-2 rounded-md bg-white border border-[#D8D0C0] text-xs"
+                    placeholder="https://... or upload photo"
+                  />
+                  <label className="px-3 py-2 rounded-md bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-semibold cursor-pointer flex items-center gap-1 shrink-0">
+                    <Upload className="w-3.5 h-3.5 text-stone-700" />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploadingImage}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, url => setEditingCombo({ ...editingCombo, primary_image_path: url }));
+                      }}
+                    />
+                  </label>
+                </div>
+                {editingCombo.primary_image_path && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <img
+                      src={editingCombo.primary_image_path}
+                      alt="Combo Preview"
+                      className="w-12 h-12 object-cover rounded border border-stone-200"
+                    />
+                    <span className="text-[11px] text-stone-500">Image loaded</span>
+                  </div>
+                )}
               </div>
 
               {/* Included items */}
@@ -1770,7 +1853,7 @@ export default function AdminDashboard({
       {/* BANNER ADD/EDIT MODAL */}
       {isBannerModalOpen && editingBanner && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
-          <div className="relative bg-[#FAF8F5] rounded-xl border border-[#E8E2D5] max-w-lg w-full p-6 sm:p-8 shadow-2xl">
+          <div className="relative bg-[#FAF8F5] rounded-xl border border-[#E8E2D5] max-w-xl w-full p-6 sm:p-8 shadow-2xl">
             <button
               onClick={() => setIsBannerModalOpen(false)}
               className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-700 cursor-pointer"
@@ -1779,10 +1862,149 @@ export default function AdminDashboard({
             </button>
 
             <h3 className="font-serif text-2xl font-bold text-[#1C1917] mb-4">
-              {editingBanner.id ? 'Edit Banner' : 'Create Banner'}
+              {editingBanner.id ? 'Edit Banner / பேனர் மாற்று' : 'Create Banner / புதிய பேனர்'}
             </h3>
 
             <form onSubmit={handleSaveBanner} className="space-y-4">
+              {/* Banner Image Upload & Live Preview Section */}
+              <div className="p-4 rounded-xl bg-white border border-[#E8E2D5] shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-[#C5A880]" />
+                    <span>Banner Image / முகப்பு பேனர் படம்</span>
+                  </label>
+                  <span className="text-[10px] text-stone-500 font-medium">
+                    Recommended: 1920×800 (16:9)
+                  </span>
+                </div>
+
+                {/* Live Banner Preview */}
+                {editingBanner.image_path ? (
+                  <div className="relative rounded-lg overflow-hidden border border-stone-300 bg-stone-900 aspect-16/7 max-h-48 group shadow-inner">
+                    <img
+                      src={editingBanner.image_path}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover brightness-65 transition-all duration-300 group-hover:scale-102"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 flex flex-col justify-end pointer-events-none">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[#FAF8F5] text-[10px] font-semibold w-max mb-1">
+                        <Sparkles className="w-3 h-3 text-[#C5A880]" />
+                        <span>Homepage Preview</span>
+                      </div>
+                      <p className="text-sm sm:text-base font-serif font-bold text-white line-clamp-1 drop-shadow-sm">
+                        {editingBanner.heading_en || 'Your Banner Heading'}
+                      </p>
+                      {editingBanner.heading_ta && (
+                        <p className="text-[11px] text-stone-200 line-clamp-1">
+                          {editingBanner.heading_ta}
+                        </p>
+                      )}
+                    </div>
+
+                    <label className="absolute top-2 right-2 px-2.5 py-1 rounded bg-black/70 hover:bg-black text-white text-[11px] font-semibold cursor-pointer backdrop-blur-xs flex items-center gap-1 transition-all">
+                      <Upload className="w-3 h-3 text-[#C5A880]" />
+                      <span>Change Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isUploadingImage}
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file, url => setEditingBanner({ ...editingBanner, image_path: url }));
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-stone-300 p-6 text-center bg-stone-50">
+                    <ImageIcon className="w-8 h-8 text-stone-400 mx-auto mb-2" />
+                    <p className="text-xs text-stone-600 font-medium">No banner image selected</p>
+                    <p className="text-[10px] text-stone-400 mt-0.5">Upload a photo from your computer or phone below</p>
+                  </div>
+                )}
+
+                {/* Primary Upload Button */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#1C1917] hover:bg-stone-800 text-white text-xs font-bold cursor-pointer transition-all shadow-xs">
+                    {isUploadingImage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-[#C5A880]" />
+                        <span>Uploading Image... / பதிவேற்றப்படுகிறது...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 text-[#C5A880]" />
+                        <span>Upload Banner from Device / புதிய படம் பதிவேற்று</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingImage}
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(file, url => setEditingBanner({ ...editingBanner, image_path: url }));
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {/* URL Input */}
+                <div>
+                  <label className="text-[11px] text-stone-600 font-semibold block mb-1">Or enter Image URL (அல்லது இணைய முகவரி):</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="https://... or /uploads/..."
+                    value={editingBanner.image_path || ''}
+                    onChange={e => setEditingBanner({ ...editingBanner, image_path: e.target.value })}
+                    className="w-full px-3 py-2 rounded-md bg-[#FAF8F5] border border-[#D8D0C0] text-xs font-mono text-stone-700 focus:outline-none focus:ring-1 focus:ring-[#C5A880]"
+                  />
+                </div>
+
+                {/* Quick Presets */}
+                <div className="pt-1">
+                  <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider block mb-1.5">
+                    Quick Frame Presets / மாதிரி படங்கள்:
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {[
+                      {
+                        title: 'Royal Gold Frame',
+                        url: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=1600'
+                      },
+                      {
+                        title: 'Return Gift Sets',
+                        url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=1600'
+                      },
+                      {
+                        title: 'Wedding Gallery',
+                        url: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&q=80&w=1600'
+                      },
+                      {
+                        title: 'Artisan Wood',
+                        url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1600'
+                      }
+                    ].map(preset => (
+                      <button
+                        key={preset.title}
+                        type="button"
+                        onClick={() => setEditingBanner({ ...editingBanner, image_path: preset.url })}
+                        className={`p-1.5 rounded border text-[10px] text-left transition-all cursor-pointer ${
+                          editingBanner.image_path === preset.url
+                            ? 'border-[#C5A880] bg-[#FAF8F5] text-stone-900 font-bold ring-1 ring-[#C5A880]'
+                            : 'border-stone-200 bg-white text-stone-600 hover:border-stone-400'
+                        }`}
+                      >
+                        {preset.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-stone-800 block mb-1">Heading (English)</label>
                 <input
@@ -1810,17 +2032,6 @@ export default function AdminDashboard({
                   type="text"
                   value={editingBanner.subtitle_en || ''}
                   onChange={e => setEditingBanner({ ...editingBanner, subtitle_en: e.target.value })}
-                  className="w-full px-3 py-2 rounded-md bg-white border border-[#D8D0C0] text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-stone-800 block mb-1">Banner Image URL</label>
-                <input
-                  type="text"
-                  required
-                  value={editingBanner.image_path || ''}
-                  onChange={e => setEditingBanner({ ...editingBanner, image_path: e.target.value })}
                   className="w-full px-3 py-2 rounded-md bg-white border border-[#D8D0C0] text-xs"
                 />
               </div>

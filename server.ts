@@ -459,7 +459,11 @@ async function startServer() {
   });
 }
 
-if (!isServerless && process.env.NODE_ENV !== 'test') {
+const isDirectExecution = Boolean(
+  process.argv[1] && (process.argv[1].endsWith('server.ts') || process.argv[1].endsWith('server.js'))
+);
+
+if (!isServerless && isDirectExecution && process.env.NODE_ENV !== 'test') {
   startServer();
 }
 

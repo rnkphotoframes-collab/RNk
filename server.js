@@ -1435,7 +1435,10 @@ async function startServer() {
     console.log(`> RNK Photo Frames Server running on port ${PORT}`);
   });
 }
-if (!isServerless2 && process.env.NODE_ENV !== "test") {
+var isDirectExecution = Boolean(
+  process.argv[1] && (process.argv[1].endsWith("server.ts") || process.argv[1].endsWith("server.js"))
+);
+if (!isServerless2 && isDirectExecution && process.env.NODE_ENV !== "test") {
   startServer();
 }
 var server_default = app;

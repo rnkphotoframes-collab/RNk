@@ -1,3 +1,4 @@
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   Category,
   Product,
@@ -8,6 +9,12 @@ import {
   DashboardStats,
   EnquiryStatus,
 } from '../types/index.js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+export const supabase: SupabaseClient | null =
+  supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 const ADMIN_TOKEN_KEY = 'rnk_admin_token';
 
@@ -33,6 +40,18 @@ function getAuthHeaders(): HeadersInit {
 
 // Public API
 export async function fetchCategories(): Promise<Category[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      if (!error && data && data.length > 0) return data as Category[];
+    } catch (err) {
+      console.warn('Supabase fetchCategories fallback to API:', err);
+    }
+  }
   const res = await fetch('/api/categories');
   if (!res.ok) throw new Error('Failed to load categories');
   return res.json();
@@ -43,6 +62,32 @@ export async function fetchProducts(options?: {
   search?: string;
   featured?: boolean;
 }): Promise<Product[]> {
+  if (supabase) {
+    try {
+      let query = supabase
+        .from('products')
+        .select('*, product_sizes(*), product_images(*)')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (options?.featured) query = query.eq('is_featured', true);
+      const { data, error } = await query;
+      if (!error && data && data.length > 0) {
+        let prods = data.map((p: any) => ({
+          ...p,
+          sizes: p.product_sizes || [],
+          images: p.product_images || [],
+        }));
+        if (options?.category) {
+          prods = prods.filter((p: any) => p.category_id === options.category || p.slug === options.category);
+        }
+        return prods as Product[];
+      }
+    } catch (err) {
+      console.warn('Supabase fetchProducts fallback to API:', err);
+    }
+  }
+
   const params = new URLSearchParams();
   if (options?.category) params.append('category', options.category);
   if (options?.search) params.append('search', options.search);
@@ -94,6 +139,37 @@ export async function submitCustomerEnquiry(data: {
   enquiry_type?: CustomerEnquiry['enquiry_type'];
   message: string;
 }): Promise<{ success: boolean; message: string; enquiry: CustomerEnquiry }> {
+  if (supabase) {
+    try {
+      const { data: inserted, error } = await supabase
+        .from('enquiries')
+        .insert([
+          {
+            customer_name: data.customer_name,
+            phone_number: data.phone_number,
+            product_id: data.product_id || null,
+            combo_id: data.combo_id || null,
+            selected_size: data.selected_size || null,
+            enquiry_type: data.enquiry_type || 'general',
+            message: data.message,
+            status: 'NEW',
+          },
+        ])
+        .select()
+        .single();
+
+      if (!error && inserted) {
+        return {
+          success: true,
+          message: 'Enquiry received successfully! Our team will contact you shortly.',
+          enquiry: inserted as CustomerEnquiry,
+        };
+      }
+    } catch (err) {
+      console.warn('Supabase submitCustomerEnquiry fallback to API:', err);
+    }
+  }
+
   const res = await fetch('/api/enquiries', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

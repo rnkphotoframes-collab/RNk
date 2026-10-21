@@ -97,6 +97,7 @@ export default function AdminDashboard({
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Partial<Banner> | null>(null);
+  const [newAdminPassword, setNewAdminPassword] = useState('');
 
   // Enquiry filters
   const [enquiryStatusFilter, setEnquiryStatusFilter] = useState<string>('ALL');
@@ -364,6 +365,17 @@ export default function AdminDashboard({
     } catch (err: any) {
       alert(err.message);
     }
+  };
+
+  const handleUpdatePassword = () => {
+    if (!newAdminPassword.trim()) {
+      alert('Please enter a new password');
+      return;
+    }
+    const clean = newAdminPassword.trim();
+    localStorage.setItem('rnk_custom_admin_password', clean);
+    showNotification('Security password updated! You can now use this password for all future admin logins.');
+    setNewAdminPassword('');
   };
 
   // Image Upload helper
@@ -1242,6 +1254,35 @@ export default function AdminDashboard({
                 Save Settings
               </button>
             </form>
+
+            {/* Change Security Password Card */}
+            <div className="pt-6 border-t border-[#E8E2D5] space-y-3">
+              <div>
+                <h4 className="font-serif text-lg font-bold text-[#1C1917]">
+                  Change Admin Password
+                </h4>
+                <p className="text-xs text-stone-500">
+                  Update your personal login password. You can also configure it in Vercel / .env via <code className="font-mono bg-stone-100 px-1 py-0.5 rounded text-stone-800">ADMIN_PASSWORD</code>.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Type new custom password (e.g. MySecret@2026)"
+                  value={newAdminPassword}
+                  onChange={e => setNewAdminPassword(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-md bg-[#FAF8F5] border border-[#D8D0C0] text-xs font-mono outline-none focus:border-[#C5A880]"
+                />
+                <button
+                  type="button"
+                  onClick={handleUpdatePassword}
+                  className="px-5 py-2 rounded-md bg-[#997A4D] hover:bg-[#85683F] text-white text-xs font-semibold cursor-pointer shrink-0 transition-colors"
+                >
+                  Update Password
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Mail, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { adminLogin } from '../../lib/api.js';
 
 interface AdminLoginProps {
@@ -10,6 +10,7 @@ interface AdminLoginProps {
 export default function AdminLogin({ onLoginSuccess, onNavigateHome }: AdminLoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -18,8 +19,11 @@ export default function AdminLogin({ onLoginSuccess, onNavigateHome }: AdminLogi
     setIsLoading(true);
     setErrorMessage('');
 
+    const cleanEmail = email.trim();
+    const cleanPass = password.trim();
+
     try {
-      await adminLogin(email, password);
+      await adminLogin(cleanEmail, cleanPass);
       onLoginSuccess();
     } catch (err: any) {
       setErrorMessage(err.message || 'Invalid credentials. Please verify your admin email and password.');
@@ -78,13 +82,21 @@ export default function AdminLogin({ onLoginSuccess, onNavigateHome }: AdminLogi
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2.5 rounded-md bg-[#FAF8F5] border border-[#D8D0C0] text-xs text-[#1C1917] focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] outline-none"
-                  placeholder="••••••••••••"
+                  className="w-full pl-9 pr-10 py-2.5 rounded-md bg-[#FAF8F5] border border-[#D8D0C0] text-xs text-[#1C1917] focus:border-[#C5A880] focus:ring-1 focus:ring-[#C5A880] outline-none"
+                  placeholder="Enter admin password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-stone-500" />}
+                </button>
               </div>
             </div>
 

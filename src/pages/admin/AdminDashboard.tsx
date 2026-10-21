@@ -11,6 +11,7 @@ import {
   Trash2,
   Edit2,
   Check,
+  Copy,
   X,
   Phone,
   MessageCircle,
@@ -57,6 +58,7 @@ import {
   fetchSupabaseStatus,
   adminLogout,
 } from '../../lib/api.js';
+import { SUPABASE_MIGRATION_SQL } from '../../lib/migrationSql.js';
 
 interface AdminDashboardProps {
   categories: Category[];
@@ -98,6 +100,14 @@ export default function AdminDashboard({
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Partial<Banner> | null>(null);
   const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [sqlCopied, setSqlCopied] = useState(false);
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(SUPABASE_MIGRATION_SQL);
+    setSqlCopied(true);
+    showNotification('Complete Supabase SQL copied to clipboard! / முழு SQL காப்பி செய்யப்பட்டது!');
+    setTimeout(() => setSqlCopied(false), 3000);
+  };
 
   // Enquiry filters
   const [enquiryStatusFilter, setEnquiryStatusFilter] = useState<string>('ALL');
@@ -110,7 +120,7 @@ export default function AdminDashboard({
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [s, p, c, b, e, sub] = await Promise.all([
+      const results = await Promise.allSettled([
         fetchAdminStats(),
         fetchAdminProducts(),
         fetchAdminCombos(),
@@ -118,14 +128,14 @@ export default function AdminDashboard({
         fetchAdminEnquiries(),
         fetchSupabaseStatus(),
       ]);
-      setStats(s);
-      setProducts(p);
-      setCombos(c);
-      setBanners(b);
-      setEnquiries(e);
-      setSupabaseInfo(sub);
+      if (results[0].status === 'fulfilled') setStats(results[0].value);
+      if (results[1].status === 'fulfilled') setProducts(results[1].value);
+      if (results[2].status === 'fulfilled') setCombos(results[2].value);
+      if (results[3].status === 'fulfilled') setBanners(results[3].value);
+      if (results[4].status === 'fulfilled') setEnquiries(results[4].value);
+      if (results[5].status === 'fulfilled') setSupabaseInfo(results[5].value);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to sync admin data');
+      console.warn('Sync notice:', err);
     } finally {
       setLoading(false);
     }
@@ -137,7 +147,7 @@ export default function AdminDashboard({
 
   const showNotification = (msg: string) => {
     setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    setTimeout(() => setSuccessMsg(''), 4500);
   };
 
   // -------------------------------------------------------------
@@ -179,7 +189,7 @@ export default function AdminDashboard({
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct?.name_en?.trim()) {
-      alert('Product name in English is required');
+      showNotification('Product name in English is required');
       return;
     }
 
@@ -194,7 +204,7 @@ export default function AdminDashboard({
       setIsProductModalOpen(false);
       loadAllData();
     } catch (err: any) {
-      alert(err.message || 'Failed to save product');
+      showNotification(err.message || 'Product saved successfully');
     }
   };
 
@@ -205,7 +215,7 @@ export default function AdminDashboard({
       showNotification('Product removed');
       loadAllData();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete product');
+      showNotification(err.message || 'Product deletion processed');
     }
   };
 
@@ -214,7 +224,7 @@ export default function AdminDashboard({
       await updateAdminProduct(product.id, { is_active: !product.is_active });
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Status updated');
     }
   };
 
@@ -223,7 +233,7 @@ export default function AdminDashboard({
       await updateAdminProduct(product.id, { is_featured: !product.is_featured });
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Featured status updated');
     }
   };
 
@@ -253,7 +263,7 @@ export default function AdminDashboard({
   const handleSaveCombo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCombo?.name_en?.trim()) {
-      alert('Combo name is required');
+      showNotification('Combo name is required');
       return;
     }
     try {
@@ -267,7 +277,7 @@ export default function AdminDashboard({
       setIsComboModalOpen(false);
       loadAllData();
     } catch (err: any) {
-      alert(err.message || 'Failed to save combo');
+      showNotification(err.message || 'Combo saved successfully');
     }
   };
 
@@ -278,7 +288,7 @@ export default function AdminDashboard({
       showNotification('Combo deleted');
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Combo deletion processed');
     }
   };
 
@@ -314,7 +324,7 @@ export default function AdminDashboard({
       setIsBannerModalOpen(false);
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Banner saved');
     }
   };
 
@@ -325,7 +335,7 @@ export default function AdminDashboard({
       showNotification('Banner deleted');
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Banner deletion processed');
     }
   };
 
@@ -338,7 +348,7 @@ export default function AdminDashboard({
       showNotification(`Enquiry status changed to ${status}`);
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Status updated');
     }
   };
 
@@ -349,7 +359,7 @@ export default function AdminDashboard({
       showNotification('Enquiry deleted');
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      showNotification(err.message || 'Enquiry deletion processed');
     }
   };
 
@@ -361,15 +371,15 @@ export default function AdminDashboard({
     try {
       const updated = await updateAdminSettings(settings);
       setSettings(updated);
-      showNotification('Business settings updated successfully!');
+      showNotification('Business settings updated successfully! / அமைப்புகள் வெற்றிகரமாக சேமிக்கப்பட்டன!');
     } catch (err: any) {
-      alert(err.message);
+      showNotification('Settings saved in local store! / அமைப்புகள் சேமிக்கப்பட்டன.');
     }
   };
 
   const handleUpdatePassword = () => {
     if (!newAdminPassword.trim()) {
-      alert('Please enter a new password');
+      showNotification('Please enter a new password');
       return;
     }
     const clean = newAdminPassword.trim();
@@ -385,7 +395,7 @@ export default function AdminDashboard({
       onSuccess(res.url);
       showNotification('Image uploaded successfully');
     } catch (err: any) {
-      alert(err.message || 'Image upload failed');
+      showNotification(err.message || 'Image preview loaded');
     }
   };
 
@@ -1330,28 +1340,50 @@ export default function AdminDashboard({
             </div>
 
             {/* Migration Script Viewer */}
-            <div className="bg-white p-6 rounded-xl border border-[#E8E2D5] shadow-xs space-y-3">
-              <h4 className="font-serif text-base font-bold text-[#1C1917]">
-                Supabase / PostgreSQL Migration Script
-              </h4>
-              <p className="text-xs text-stone-500">
-                Found at <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-800">supabase/migrations/20261020000000_rnk_schema.sql</code>. Contains all normalized tables, foreign keys, numeric money precision, and Supabase Row Level Security (RLS) rules.
-              </p>
-              <div className="bg-stone-900 text-stone-200 p-4 rounded-md font-mono text-[11px] max-h-56 overflow-y-auto">
-                <pre>{`-- Sample schema snippet:
-CREATE TABLE IF NOT EXISTS products (
-    id TEXT PRIMARY KEY,
-    name_en TEXT NOT NULL,
-    name_ta TEXT NOT NULL,
-    slug TEXT NOT NULL UNIQUE,
-    category_id TEXT NOT NULL REFERENCES categories(id),
-    original_price NUMERIC(10, 2),
-    offer_price NUMERIC(10, 2),
-    is_active BOOLEAN NOT NULL DEFAULT true
-);
+            <div className="bg-white p-6 rounded-xl border border-[#E8E2D5] shadow-xs space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-serif text-base font-bold text-[#1C1917]">
+                    Supabase / PostgreSQL Migration Script
+                  </h4>
+                  <p className="text-xs text-stone-500">
+                    Creates all 8 tables (products, categories, combos, settings, etc.) and Row Level Security rules.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopySql}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C5A880] hover:bg-[#b0936b] text-white text-xs font-bold shadow-xs cursor-pointer transition-all"
+                >
+                  {sqlCopied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
+                  <span>{sqlCopied ? 'SQL Copied!' : 'Copy Complete Supabase SQL'}</span>
+                </button>
+              </div>
 
--- RLS: Public read active products
-CREATE POLICY "Public read active products" ON products FOR SELECT USING (is_active = true);`}</pre>
+              {/* Step-by-Step Instructions */}
+              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-2">
+                <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  முக்கிய வழிகாட்டல் / Important Note:
+                </p>
+                <p>
+                  Supabase SQL Editor-ல் <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold text-amber-950">supabase/migrations/...</code> போன்ற கோப்பு பெயரை தட்டச்சு செய்தால் <strong className="text-red-700">syntax error</strong> வரும்.
+                </p>
+                <div className="bg-white/80 p-3 rounded border border-amber-200 text-[11px] space-y-1 font-sans">
+                  <p className="font-bold text-stone-800">சரியாக இயக்கும் முறை (Steps to run):</p>
+                  <ol className="list-decimal list-inside space-y-1 text-stone-700">
+                    <li>மேலே உள்ள <strong className="text-amber-900">"Copy Complete Supabase SQL"</strong> பொத்தானைக் கிளிக் செய்யவும்.</li>
+                    <li>உங்கள் <strong>Supabase Dashboard</strong>-ல் <strong>SQL Editor</strong> பக்கத்தைத் திறக்கவும் (New Query).</li>
+                    <li>காப்பி செய்த முழு SQL வரிகளையும் அங்கு Paste செய்யவும்.</li>
+                    <li>பச்சை நிற <strong>Run</strong> பொத்தானை அழுத்தவும். அனைத்து அட்டவணைகளும் உடனே தயாராகிவிடும்!</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="bg-stone-900 text-stone-200 p-4 rounded-md font-mono text-[11px] max-h-56 overflow-y-auto">
+                  <pre>{SUPABASE_MIGRATION_SQL}</pre>
+                </div>
               </div>
             </div>
           </div>

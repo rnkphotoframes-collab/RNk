@@ -17,10 +17,18 @@ const isProduction = process.env.NODE_ENV === 'production';
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
-// Ensure upload directory exists
-const UPLOAD_DIR = path.resolve(process.cwd(), 'public', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// Ensure upload directory exists safely
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
+const UPLOAD_DIR = isServerless
+  ? path.resolve('/tmp', 'rnk_uploads')
+  : path.resolve(process.cwd(), 'public', 'uploads');
+
+try {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  }
+} catch (e) {
+  // Read-only filesystem fallback
 }
 
 // Multer storage for persistent image uploads
@@ -451,7 +459,7 @@ async function startServer() {
   });
 }
 
-if (!process.env.VERCEL) {
+if (!isServerless && process.env.NODE_ENV !== 'test') {
   startServer();
 }
 

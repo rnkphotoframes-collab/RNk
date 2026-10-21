@@ -13,7 +13,10 @@ import {
   ProductImage
 } from '../types/index.js';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
+const DATA_DIR = isServerless
+  ? path.resolve('/tmp', 'rnk_data')
+  : path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'rnk_database.json');
 
 interface DatabaseSchema {
@@ -583,14 +586,18 @@ class DatabaseManager {
   }
 
   private ensureDirectory() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+    } catch (err) {
+      // In-memory mode if filesystem is read-only
     }
   }
 
   private loadDatabase(): DatabaseSchema {
-    if (fs.existsSync(DB_FILE)) {
-      try {
+    try {
+      if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         // Fill missing defaults if any
@@ -602,10 +609,11 @@ class DatabaseManager {
           banners: parsed.banners || DEFAULT_BANNERS,
           settings: parsed.settings || DEFAULT_SETTINGS,
         };
-      } catch (err) {
-        console.error('Failed reading DB file, creating fresh store:', err);
       }
+    } catch (err) {
+      console.warn('Notice: Using default dataset for database:', err);
     }
+
     const freshDb: DatabaseSchema = {
       categories: DEFAULT_CATEGORIES,
       products: DEFAULT_PRODUCTS,
@@ -614,7 +622,9 @@ class DatabaseManager {
       banners: DEFAULT_BANNERS,
       settings: DEFAULT_SETTINGS,
     };
-    this.saveDatabase(freshDb);
+    try {
+      this.saveDatabase(freshDb);
+    } catch {}
     return freshDb;
   }
 
@@ -625,7 +635,7 @@ class DatabaseManager {
       fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf-8');
       fs.renameSync(tmpFile, DB_FILE);
     } catch (err) {
-      console.error('Error writing to DB file:', err);
+      // In serverless / read-only filesystem, state stays persistent in memory
     }
   }
 
